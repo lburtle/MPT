@@ -1,0 +1,1 @@
+30 18 * * * root python3 /home/lburtle/.pyenv/shims/python3 /Projects/MPT/BNN_train.py >> /var/log/cron.log 2>&1

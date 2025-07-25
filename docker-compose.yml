@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  bnn_train:
+    build: .
+    container_name: bnn
+    command: python3 BNN_train.py
+    restart: unless-stopped
+
+  sentimenttool:
+    build: .
+    container_name: sentiment-tool
+    command: python3 Sentiment/sentimenttool.py
+    restart: unless-stopped
