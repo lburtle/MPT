@@ -3,3 +3,9 @@ pyro-ppl==1.9.1
 numpy==2.3.1
 yfinance
 pandas
+newsapi-python == 0.2.7
+transformers == 4.53.2
+nltk == 3.9.1
+requests
+newspaper3k == 0.2.8
+lxml_html_clean
