@@ -1,0 +1,10 @@
+pandas
+newsapi-python == 0.2.7
+transformers == 4.53.2
+torch == 2.7.1
+nltk == 3.9.1
+matplotlib
+requests
+newspaper3k == 0.2.8
+lxml_html_clean
+web3 == 7.12.1
