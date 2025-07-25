@@ -580,7 +580,7 @@ if __name__ == "__main__":
 
 print("Training completed.")
 
-today_date = (datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d')
+today_date = (datetime.now()).strftime('%Y-%m-%d')
 recent_data_start = (datetime.now() - timedelta(days=lookback_window + 6)).strftime('%Y-%m-%d')
 latest_stock_df = get_stock_data(ticker_symbol, start_date=recent_data_start, end_date=today_date)
 
