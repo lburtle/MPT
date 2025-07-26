@@ -41,6 +41,6 @@ services:
     build: .
     container_name: logic
     command: python3 logic.py
-    restart: no
+    restart: on-failure
     volumes:
       - ./shared_output:/output
