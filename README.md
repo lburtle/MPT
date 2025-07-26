@@ -11,3 +11,6 @@
 ### - In the crontab file, put your correct path for python long with the path to the files in the repository
 ### - In CLI, type docker-compose up -d
 ### Everything should run hopefully
+### --------------------------------------------
+#### This current version runs two BNNs simultaneously
+#### Consider your computation capacity before running
