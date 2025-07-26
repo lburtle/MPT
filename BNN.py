@@ -25,9 +25,9 @@ torch.manual_seed(0)
 np.random.seed(0)
 pyro.set_rng_seed(0)
 
-ticker_symbol = 'TSLA' ## Change this for each stock to analyze
+tickers = ["AAPL", "TSLA", "NVDA"] ## Change this for each stock to analyze
 
-def get_stock_data(ticker=ticker_symbol, start_date=None, end_date=None):
+def get_stock_data(ticker, start_date=None, end_date=None):
     if start_date is None:
         start_date = (datetime.now() - timedelta(days=7*365)).strftime('%Y-%m-%d')
     if end_date is None:
@@ -384,8 +384,8 @@ def init_loc_fn(site):
     
     return torch.zeros(param_shape, device=device)
 
-def train_model(ticker_symbol):
-    stock_df = get_stock_data(ticker_symbol, start_date='2018-01-01', end_date=datetime.now().strftime('%Y-%m-%d'))
+def train_model(ticker):
+    stock_df = get_stock_data(ticker, start_date='2018-01-01', end_date=datetime.now().strftime('%Y-%m-%d'))
 
     lookback_window = 10 ## Could change this for different lookback weighting (e.g. decay for larger window size)
     prediction_horizon = 3 ## Number of days to predict into the future
@@ -577,84 +577,87 @@ def train_model(ticker_symbol):
                 
 
 if __name__ == "__main__":
-    bnn, guide, scaling_info, lookback_window = train_model(ticker_symbol=ticker_symbol)
+    for ticker in tickers:
+        try:
+            bnn, guide, scaling_info, lookback_window = train_model(ticker=ticker)
+            print("Training completed.")
 
-print("Training completed.")
+            today_date = (datetime.now()).strftime('%Y-%m-%d')
+            recent_data_start = (datetime.now() - timedelta(days=lookback_window + 6)).strftime('%Y-%m-%d')
+            latest_stock_df = get_stock_data(ticker, start_date=recent_data_start, end_date=today_date)
 
-today_date = (datetime.now()).strftime('%Y-%m-%d')
-recent_data_start = (datetime.now() - timedelta(days=lookback_window + 6)).strftime('%Y-%m-%d')
-latest_stock_df = get_stock_data(ticker_symbol, start_date=recent_data_start, end_date=today_date)
+            last_actual_close_price = latest_stock_df['Close'].iloc[-1]
+            print(f"Last actual close price for {ticker} on {latest_stock_df.index[-1]}: {last_actual_close_price:.2f}")
 
-last_actual_close_price = latest_stock_df['Close'].iloc[-1]
-print(f"Last actual close price for {ticker_symbol} on {latest_stock_df.index[-1]}: {last_actual_close_price:.2f}")
+            if len(latest_stock_df) < lookback_window:
+                print(f"Not enough data to form a {lookback_window}-day window.")
+                print("Cannot make predictions without sufficient historical data.")
+            else:
+                features_cols_for_future = [
+                    'Close', 'SMA_5', 'SMA_10', 'RSI_14', 'MACD_Hist',
+                    'BB_Upper', 'BB_Lower', 'Price_Change', 'Relative_Volume',
+                    'Day_of_Week_sin', 'Day_of_Week_cos'
+                ]
 
-if len(latest_stock_df) < lookback_window:
-    print(f"Not enough data to form a {lookback_window}-day window.")
-    print("Cannot make predictions without sufficient historical data.")
-else:
-    features_cols_for_future = [
-        'Close', 'SMA_5', 'SMA_10', 'RSI_14', 'MACD_Hist',
-        'BB_Upper', 'BB_Lower', 'Price_Change', 'Relative_Volume',
-        'Day_of_Week_sin', 'Day_of_Week_cos'
-    ]
+            input_for_future_features_np = calculate_single_row_features(
+                    latest_stock_df, features_cols_for_future
+            )
+            print(f"Shape of input_for_future_features_np: {input_for_future_features_np.shape}")
+            print(f"Shape of scaling_info['x_min'].cpu().numpy(): {scaling_info['x_min'].cpu().numpy().shape}")
+            print(f"Shape of scaling_info['x_max'].cpu().numpy(): {scaling_info['x_max'].cpu().numpy().shape}")
 
-input_for_future_features_np = calculate_single_row_features(
-        latest_stock_df, features_cols_for_future
-)
-print(f"Shape of input_for_future_features_np: {input_for_future_features_np.shape}")
-print(f"Shape of scaling_info['x_min'].cpu().numpy(): {scaling_info['x_min'].cpu().numpy().shape}")
-print(f"Shape of scaling_info['x_max'].cpu().numpy(): {scaling_info['x_max'].cpu().numpy().shape}")
+            input_for_future_norm = (input_for_future_features_np - scaling_info['x_min'].cpu().numpy()) / scaling_info['x_max'].cpu().numpy()
+            input_for_future_tensor = torch.tensor(input_for_future_norm, dtype=torch.float32).to(device).unsqueeze(0)
 
-input_for_future_norm = (input_for_future_features_np - scaling_info['x_min'].cpu().numpy()) / scaling_info['x_max'].cpu().numpy()
-input_for_future_tensor = torch.tensor(input_for_future_norm, dtype=torch.float32).to(device).unsqueeze(0)
+            bnn.eval()
+            with torch.no_grad():
+                predictive_future = Predictive(bnn, guide=guide, num_samples=500, return_sites=("_RETURN",))
+                samples_future = predictive_future(input_for_future_tensor)
 
-bnn.eval()
-with torch.no_grad():
-    predictive_future = Predictive(bnn, guide=guide, num_samples=500, return_sites=("_RETURN",))
-    samples_future = predictive_future(input_for_future_tensor)
+                mean_pred_normalized_future = samples_future["_RETURN"].mean(0)
+                std_pred_normalized_future = samples_future["_RETURN"].std(0)
 
-    mean_pred_normalized_future = samples_future["_RETURN"].mean(0)
-    std_pred_normalized_future = samples_future["_RETURN"].std(0)
+            y_min, y_max = scaling_info['y_min'], scaling_info['y_max']
+            predicted_return_unnorm = mean_pred_normalized_future * (y_max - y_min) + y_min
+            pred_std_return_unnorm = std_pred_normalized_future * (y_max - y_min)
 
-y_min, y_max = scaling_info['y_min'], scaling_info['y_max']
-predicted_return_unnorm = mean_pred_normalized_future * (y_max - y_min) + y_min
-pred_std_return_unnorm = std_pred_normalized_future * (y_max - y_min)
+            predicted_close_for_future = last_actual_close_price * (1 + predicted_return_unnorm.item())
 
-predicted_close_for_future = last_actual_close_price * (1 + predicted_return_unnorm.item())
+            lower_bound_price = last_actual_close_price * (1 + predicted_return_unnorm.item() - 2 * pred_std_return_unnorm.item())
+            upper_bound_price = last_actual_close_price * (1 + predicted_return_unnorm.item() + 2 * pred_std_return_unnorm.item())
 
-lower_bound_price = last_actual_close_price * (1 + predicted_return_unnorm.item() - 2 * pred_std_return_unnorm.item())
-upper_bound_price = last_actual_close_price * (1 + predicted_return_unnorm.item() + 2 * pred_std_return_unnorm.item())
+            print(f"Predicted return for future (unnormalized): {predicted_return_unnorm.item():.4f}")
 
-print(f"Predicted return for future (unnormalized): {predicted_return_unnorm.item():.4f}")
+            next_trading_day = latest_stock_df.index[-1] + timedelta(days=3) ## days = # of days ahead to predict
+            while next_trading_day.weekday() >= 5:
+                next_trading_day += timedelta(days=1)
 
-next_trading_day = latest_stock_df.index[-1] + timedelta(days=3) ## days = # of days ahead to predict
-while next_trading_day.weekday() >= 5:
-    next_trading_day += timedelta(days=1)
+            print(f"Predicted close price for {ticker} on {next_trading_day.strftime('%Y-%m-%d')}: {predicted_close_for_future:.2f}")
+            print(f"Lower bound price: {lower_bound_price:.2f}, Upper bound price: {upper_bound_price:.2f}")
+            print(f"Uncertainty (approx. += 2 std dev of Return): +={2 * pred_std_return_unnorm.item():.4f} on return scale, or +={2 * pred_std_return_unnorm.item() * last_actual_close_price:.2f} on price scale")
 
-print(f"Predicted close price for {ticker_symbol} on {next_trading_day.strftime('%Y-%m-%d')}: {predicted_close_for_future:.2f}")
-print(f"Lower bound price: {lower_bound_price:.2f}, Upper bound price: {upper_bound_price:.2f}")
-print(f"Uncertainty (approx. += 2 std dev of Return): +={2 * pred_std_return_unnorm.item():.4f} on return scale, or +={2 * pred_std_return_unnorm.item() * last_actual_close_price:.2f} on price scale")
+            def get_signal():
 
-def get_signal():
+                ## Very simplistic strategy: if rising -> buy, if stable -> hold, if dropping -> sell
 
-    ## Very simplistic strategy: if rising -> buy, if stable -> hold, if dropping -> sell
+                if predicted_close_for_future > last_actual_close_price:
+                    signal = 2
+                elif predicted_close_for_future == last_actual_close_price:
+                    signal = 1
+                else:
+                    signal = 0
+                return signal
 
-    if predicted_close_for_future > last_actual_close_price:
-        signal = 2
-    elif predicted_close_for_future == last_actual_close_price:
-        signal = 1
-    else:
-        signal = 0
-    return signal
+            result = {
+                "ticker": ticker,
+                "next_trading_day": next_trading_day.strftime('%Y-%m-%d'),
+                "predicted_close": predicted_close_for_future,
+                "lower_bound": lower_bound_price,
+                "upper_bound": upper_bound_price,
+                "signal": get_signal()
+            }
 
-result = {
-    "ticker": ticker_symbol,
-    "next_trading_day": next_trading_day.strftime('%Y-%m-%d'),
-    "predicted_close": predicted_close_for_future,
-    "lower_bound": lower_bound_price,
-    "upper_bound": upper_bound_price,
-    "signal": get_signal()
-}
-
-with open("/output/signal.json", "w") as f:
-    json.dump(result, f, indent=2)
+            with open(f"/output/signal_{ticker}.json", "w") as f:
+                json.dump(result, f, indent=2)
+        except Exception as e:
+            print(f"Error processing {ticker}: {e}")
