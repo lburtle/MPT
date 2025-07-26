@@ -12,6 +12,7 @@ import pandas as pd
 import datetime
 from datetime import datetime, timedelta
 import time
+import json
 
 if torch.cuda.is_available():
     device = 'cuda'
@@ -645,4 +646,15 @@ def get_signal():
     else:
         signal = 0
     return signal
-    
+
+result = {
+    "ticker": ticker_symbol,
+    "next_trading_day": next_trading_day.strftime('%Y-%m-%d'),
+    "predicted_close": predicted_close_for_future,
+    "lower_bound": lower_bound_price,
+    "upper_bound": upper_bound_price,
+    "signal": get_signal()
+}
+
+with open("/output/signal.json", "w") as f:
+    json.dump(result, f, indent=2)

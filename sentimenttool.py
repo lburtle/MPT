@@ -10,6 +10,7 @@ from nltk.tokenize import sent_tokenize
 import requests
 from newspaper import Article
 import os
+import json
 
 try:
     nltk.data.find('tokenizers/punkt_tab')
@@ -182,7 +183,7 @@ def sentiment_analysis(query, api_key, num_articles=100, use_full_text=False):
     output += f"Number of articles skipped (non-financial): {skipped}\n"
     output += f"Average sentiment score: {avg_sentiment:.3f}\n"
     output += f"Overall investment sentiment: {overall_sentiment}\n\n"
-    output += "Article Details:\n"
+    # output += "Article Details:\n"
     # for _, row in df.iterrows():
     #     output += f"Title: {row['title']}\n"
     #     output += f"URL: {row['url']}\n"
@@ -200,10 +201,26 @@ def sentiment_analysis(query, api_key, num_articles=100, use_full_text=False):
     # output += "\nSentiment Distribution Chart displayed and saved as 'sentiment_chart.png' in the current directory.\n"
     # output += "If the chart did not display, ensure your environment supports matplotlib GUI (e.g., local machine or Jupyter notebook).\n"
     
-    return output
+
+    result = {
+    "query": query,
+    "num_fetched": len(articles),
+    "num_analyzed": len(df),
+    "num_skipped": skipped,
+    "avg_sentiment": avg_sentiment,
+    "overall_sentiment": overall_sentiment # This should be a list of dicts for each article
+    }
+
+    return output, result
 
 if __name__ == "__main__":
     api_key = os.getenv("API_KEY")
     query = "NVIDIA"
-    result = sentiment_analysis(query, api_key, num_articles=100)
-    print(result)
+    output, result = sentiment_analysis(query, api_key, num_articles=100)
+    print(output)
+    if isinstance(result, dict) and result:
+        with open("/output/result.json", "w") as f:
+            json.dump(result, f, indent=2)
+    else:
+        with open("/output/result.json", "w") as f:
+            f.write(output)
