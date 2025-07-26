@@ -1,1 +1,3 @@
 .env
+shared_output/result.json
+shared_output/signal.json
