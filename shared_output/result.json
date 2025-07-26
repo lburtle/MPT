@@ -1,0 +1,8 @@
+{
+  "query": "NVIDIA",
+  "num_fetched": 99,
+  "num_analyzed": 73,
+  "num_skipped": 26,
+  "avg_sentiment": 0.18943031996352486,
+  "overall_sentiment": "Positive"
+}

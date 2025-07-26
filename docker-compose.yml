@@ -1,10 +1,12 @@
 version: '3.8'
 services:
-  bnn_train:
+  bnn:
     build: .
     container_name: bnn
-    command: python3 BNN_train.py
-    restart: unless-stopped
+    command: python3 BNN.py
+    restart: no
+    volumes:
+      - ./shared_output:/output
     deploy:
       resources:
         reservations:
@@ -14,14 +16,16 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - API_KEY=your_api_key
+      - API_KEY=619f6b8993584e4fa1adbb7e1768365b
     
 
   sentimenttool:
     build: .
     container_name: sentiment-tool
     command: python3 sentimenttool.py
-    restart: unless-stopped
+    restart: no
+    volumes:
+      - ./shared_output:/output
     deploy:
       resources:
         reservations:
@@ -31,4 +35,12 @@ services:
               capabilities: [gpu]
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
-      - API_KEY=your_api_key
+      - API_KEY=619f6b8993584e4fa1adbb7e1768365b
+
+  logic:
+    build: .
+    container_name: logic
+    command: python3 logic.py
+    restart: no
+    volumes:
+      - ./shared_output:/output
