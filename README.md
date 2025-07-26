@@ -14,3 +14,4 @@
 ### --------------------------------------------
 #### This current version runs two BNNs simultaneously
 #### Consider your computation capacity before running
+#### Can alternatively combine ticker lists into one BNN file to run only one at a time.
