@@ -1,9 +1,9 @@
 version: '3.8'
 services:
-  bnn:
+  bnn-a:
     build: .
-    container_name: bnn
-    command: python3 BNN.py
+    container_name: bnn-a
+    command: python3 BNN_A.py
     restart: no
     volumes:
       - ./shared_output:/output
@@ -18,6 +18,23 @@ services:
       - NVIDIA_VISIBLE_DEVICES=all
       - API_KEY=619f6b8993584e4fa1adbb7e1768365b
     
+  bnn-b:
+    build: .
+    container_name: bnn-b
+    command: python3 BNN_B.py
+    restart: no
+    volumes:
+      - ./shared_output:/output
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - API_KEY=619f6b8993584e4fa1adbb7e1768365b
 
   sentimenttool:
     build: .

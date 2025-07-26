@@ -213,14 +213,17 @@ def sentiment_analysis(query, api_key, num_articles=100, use_full_text=False):
 
     return output, result
 
+tickers = ["AAPL", "TSLA", "NVDA", "AMZN", "MSFT", "GOOG"]
+
 if __name__ == "__main__":
-    api_key = os.getenv("API_KEY")
-    query = "NVIDIA"
-    output, result = sentiment_analysis(query, api_key, num_articles=100)
-    print(output)
-    if isinstance(result, dict) and result:
-        with open("/output/result.json", "w") as f:
-            json.dump(result, f, indent=2)
-    else:
-        with open("/output/result.json", "w") as f:
-            f.write(output)
+    for ticker in tickers:
+        api_key = os.getenv("API_KEY")
+        query = ticker
+        output, result = sentiment_analysis(query, api_key, num_articles=100)
+        print(output)
+        if isinstance(result, dict) and result:
+            with open("/output/result.json", "w") as f:
+                json.dump(result, f, indent=2)
+        else:
+            with open("/output/result.json", "w") as f:
+                f.write(output)

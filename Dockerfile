@@ -2,7 +2,8 @@ FROM python:3.9.6
 WORKDIR /Projects/MPT
 RUN apt-get update && apt-get install -y cron
 
-COPY BNN.py .
+COPY BNN_A.py .
+COPY BNN_B.py .
 COPY requirements.txt .
 COPY sentimenttool.py .
 COPY logic.py .
