@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y cron
 COPY BNN.py .
 COPY requirements.txt .
 COPY sentimenttool.py .
+COPY logic.py .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
