@@ -1,8 +1,0 @@
-{
-  "ticker": "TSLA",
-  "next_trading_day": "2025-07-28",
-  "predicted_close": 318.80787750982563,
-  "lower_bound": 286.21743804380094,
-  "upper_bound": 351.3983169758503,
-  "signal": 2
-}
