@@ -1,1 +1,2 @@
-30 18 * * * root python3 /home/lburtle/.pyenv/shims/python3 /Projects/MPT/BNN_train.py >> /var/log/cron.log 2>&1
+15 21 * * * root python3 /home/lburtle/.pyenv/shims/python3 /Projects/MPT/BNN_train.py >> /var/log/cron.log 2>&1
+15 21 * * * root python3 /home/lburtle/.pyenv/shims/python3 /Projects/MPT/sentimenttool.py >> /var/log/cron.log 2>&1

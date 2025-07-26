@@ -5,9 +5,30 @@ services:
     container_name: bnn
     command: python3 BNN_train.py
     restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - API_KEY=your_api_key
+    
 
   sentimenttool:
     build: .
     container_name: sentiment-tool
-    command: python3 Sentiment/sentimenttool.py
+    command: python3 sentimenttool.py
     restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - API_KEY=your_api_key

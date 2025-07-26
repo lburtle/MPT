@@ -24,7 +24,7 @@ torch.manual_seed(0)
 np.random.seed(0)
 pyro.set_rng_seed(0)
 
-ticker_symbol = 'AAPL' ## Change this for each stock to analyze
+ticker_symbol = 'TSLA' ## Change this for each stock to analyze
 
 def get_stock_data(ticker=ticker_symbol, start_date=None, end_date=None):
     if start_date is None:

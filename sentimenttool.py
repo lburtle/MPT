@@ -6,7 +6,7 @@ import torch
 from datetime import datetime, timedelta
 import nltk
 from nltk.tokenize import sent_tokenize
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import requests
 from newspaper import Article
 import os
@@ -28,14 +28,13 @@ def get_articles(query, api_key, num_articles=100, use_full_text=True):
     articles = []
     try:
         newsapi = NewsApiClient(api_key=api_key)
-        from_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+        from_date = (datetime.now() - timedelta(days=29)).strftime('%Y-%m-%d')
         response = newsapi.get_everything(
-            q=f"{query} (earnings OR revenue OR profit OR loss OR investor OR valuation OR shares OR dividend OR analyst OR shareholder OR bullish OR bearish OR equity) -wildfire -deal -sale",
-            language='en',
-            sort_by='relevancy',
-            page_size=min(num_articles, 100),
-            from_param=from_date,
-            sources='bloomberg,reuters,cnbc,financial-times,wall-street-journal,business-insider'        
+        q=f"{query} (earnings OR revenue OR profit OR loss OR investor OR valuation OR shares OR dividend OR analyst OR shareholder OR bullish OR bearish OR equity) -wildfire -deal -sale",
+        language='en',
+        sort_by='relevancy',
+        page_size=min(num_articles, 100),
+        from_param=from_date
         )
 
         for article in response['articles']:
@@ -184,27 +183,27 @@ def sentiment_analysis(query, api_key, num_articles=100, use_full_text=False):
     output += f"Average sentiment score: {avg_sentiment:.3f}\n"
     output += f"Overall investment sentiment: {overall_sentiment}\n\n"
     output += "Article Details:\n"
-    for _, row in df.iterrows():
-        output += f"Title: {row['title']}\n"
-        output += f"URL: {row['url']}\n"
-        output += f"Sentiment: {row['sentiment_label']} (Score: {row['sentiment_score']:.3f})\n"
-        output += f"Financial Keywords: {row['keywords']}\n"
-        output += f"Text Snippet: {row['text_snippet']}\n"
-        if row['financial_sentences']:
-            output += "Financial Sentences Analyzed:\n"
-            for sent in row['financial_sentences']:
-                output += f"  - {sent['sentence']} (Sentiment: {sent['label']}, Score: {sent['score']:.3f})\n"
-        else:
-            output += "Financial Sentences Analyzed: None\n"
-        output += "\n"
+    # for _, row in df.iterrows():
+    #     output += f"Title: {row['title']}\n"
+    #     output += f"URL: {row['url']}\n"
+    #     output += f"Sentiment: {row['sentiment_label']} (Score: {row['sentiment_score']:.3f})\n"
+    #     output += f"Financial Keywords: {row['keywords']}\n"
+    #     output += f"Text Snippet: {row['text_snippet']}\n"
+    #     if row['financial_sentences']:
+    #         output += "Financial Sentences Analyzed:\n"
+    #         for sent in row['financial_sentences']:
+    #             output += f"  - {sent['sentence']} (Sentiment: {sent['label']}, Score: {sent['score']:.3f})\n"
+    #     else:
+    #         output += "Financial Sentences Analyzed: None\n"
+    #     output += "\n"
     
     # output += "\nSentiment Distribution Chart displayed and saved as 'sentiment_chart.png' in the current directory.\n"
     # output += "If the chart did not display, ensure your environment supports matplotlib GUI (e.g., local machine or Jupyter notebook).\n"
     
     return output
-    
+
 if __name__ == "__main__":
     api_key = os.getenv("API_KEY")
-    query = input("Enter company or industry name: ")
+    query = "NVIDIA"
     result = sentiment_analysis(query, api_key, num_articles=100)
     print(result)

@@ -4,8 +4,7 @@ RUN apt-get update && apt-get install -y cron
 
 COPY BNN_train.py .
 COPY requirements.txt .
-COPY Sentiment/sentimenttool.py .
-COPY Sentiment/requirements.txt .
+COPY sentimenttool.py .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
